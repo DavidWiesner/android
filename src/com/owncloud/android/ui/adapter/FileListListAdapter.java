@@ -27,7 +27,6 @@ package com.owncloud.android.ui.adapter;
 import android.accounts.Account;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
@@ -41,6 +40,8 @@ import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import com.bumptech.glide.DrawableRequestBuilder;
+import com.bumptech.glide.Glide;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
@@ -63,6 +64,7 @@ import java.util.Vector;
  */
 public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
+    private final DrawableRequestBuilder<OCFile> thumbRequest;
     private Context mContext;
     private OCFile mFile = null;
     private Vector<OCFile> mFiles = null;
@@ -83,7 +85,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
             Context context,
             ComponentsGetter transferServiceGetter
             ) {
-        
+        thumbRequest = Glide.with(context).from(OCFile.class);
         mJustFolders = justFolders;
         mContext = context;
         mAccount = AccountUtils.getCurrentOwnCloudAccount(mContext);
@@ -103,7 +105,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
         mGridMode = false;
     }
-    
+
     @Override
     public boolean areAllItemsEnabled() {
         return true;
@@ -184,7 +186,6 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
             ImageView fileIcon = (ImageView) view.findViewById(R.id.thumbnail);
 
-            fileIcon.setTag(file.getFileId());
             TextView fileName;
             String name = file.getFileName();
 
@@ -319,53 +320,16 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
             // No Folder
             if (!file.isFolder()) {
                 if (file.isImage() && file.getRemoteId() != null){
-                    // Thumbnail in Cache?
-                    Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                            String.valueOf(file.getRemoteId())
-                            );
-                    if (thumbnail != null && !file.needsUpdateThumbnail()){
-                        fileIcon.setImageBitmap(thumbnail);
-                    } else {
-                        // generate new Thumbnail
-                        if (ThumbnailsCacheManager.cancelPotentialWork(file, fileIcon)) {
-                            final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                    new ThumbnailsCacheManager.ThumbnailGenerationTask(
-                                            fileIcon, mStorageManager, mAccount
-                                            );
-                            if (thumbnail == null) {
-                                thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                            }
-                            final ThumbnailsCacheManager.AsyncDrawable asyncDrawable =
-                                    new ThumbnailsCacheManager.AsyncDrawable(
-                                    mContext.getResources(), 
-                                    thumbnail, 
-                                    task
-                                    );
-                            fileIcon.setImageDrawable(asyncDrawable);
-                            task.execute(file);
-                        }
-                    }
-
-                    if (file.getMimetype().equalsIgnoreCase("image/png")) {
-                        fileIcon.setBackgroundColor(mContext.getResources()
-                                .getColor(R.color.background_color));
-                    }
-
-
+                    thumbRequest.placeholder(R.drawable.file_image).load(file).into(fileIcon);
                 } else {
-                    fileIcon.setImageResource(MimetypeIconUtil.getFileTypeIconId(file.getMimetype(),
-                            file.getFileName()));
+                    thumbRequest.placeholder(MimetypeIconUtil.getFileTypeIconId(file.getMimetype(),
+                            file.getFileName())).load(null).into(fileIcon);
                 }
-
-
             } else {
-                // Folder
-                fileIcon.setImageResource(
-                        MimetypeIconUtil.getFolderTypeIconId(
-                                file.isSharedWithMe() || file.isSharedWithSharee(),
-                                file.isSharedViaLink()
-                        )
-                );
+                thumbRequest.placeholder(MimetypeIconUtil.getFolderTypeIconId(
+                        file.isSharedWithMe() || file.isSharedWithSharee(),
+                        file.isSharedViaLink()
+                )).load(null).into(fileIcon);
             }
         }
 

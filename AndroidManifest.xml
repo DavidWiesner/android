@@ -168,12 +168,12 @@
         <activity android:name=".ui.activity.ConflictsResolveActivity"/>
         <activity android:name=".ui.activity.GenericExplanationActivity"/>
         <activity android:name=".ui.activity.ErrorsWhileCopyingHandlerActivity"/>
-        
+
         <activity android:name=".ui.activity.LogHistoryActivity"/>
 
         <activity android:name=".ui.errorhandling.ErrorShowActivity" />
         <activity android:name=".ui.activity.UploadListActivity" />
-        
+
         <receiver android:name=".files.services.ConnectivityActionReceiver"
 		    android:enabled="true" android:label="ConnectivityActionReceiver">
 		    <intent-filter>
@@ -230,6 +230,9 @@
         <activity android:name=".ui.activity.ManageSpaceActivity"
                   android:label="@string/manage_space_title"
                   android:theme="@style/Theme.ownCloud" />
+        <meta-data
+            android:name="com.owncloud.android.utils.glide.OCGlideModule"
+            android:value="GlideModule" />
     </application>
 
 </manifest>
