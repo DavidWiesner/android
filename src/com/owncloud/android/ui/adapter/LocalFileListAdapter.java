@@ -20,12 +20,7 @@
  */
 package com.owncloud.android.ui.adapter;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Comparator;
-
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,11 +31,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
-import com.owncloud.android.lib.common.utils.Log_OC;
-import com.owncloud.android.utils.BitmapUtils;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.MimetypeIconUtil;
+import com.owncloud.android.utils.glide.ThumbnailLoader;
+
+import java.io.File;
+import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * This Adapter populates a ListView with all files and directories contained
@@ -49,6 +45,7 @@ import com.owncloud.android.utils.MimetypeIconUtil;
 public class LocalFileListAdapter extends BaseAdapter implements ListAdapter {
 
     private static final String TAG = LocalFileListAdapter.class.getSimpleName();
+    private final ThumbnailLoader thumbLoader;
 
     private Context mContext;
     private File mDirectory;
@@ -57,6 +54,7 @@ public class LocalFileListAdapter extends BaseAdapter implements ListAdapter {
     public LocalFileListAdapter(File directory, Context context) {
         mContext = context;
         swapDirectory(directory);
+        thumbLoader = new ThumbnailLoader(context);
     }
 
     @Override
@@ -108,17 +106,7 @@ public class LocalFileListAdapter extends BaseAdapter implements ListAdapter {
             
             ImageView fileIcon = (ImageView) view.findViewById(R.id.thumbnail);
 
-            /** Cancellation needs do be checked and done before changing the drawable in fileIcon, or
-             * {@link ThumbnailsCacheManager#cancelPotentialWork} will NEVER cancel any task.
-             **/
-            boolean allowedToCreateNewThumbnail = (ThumbnailsCacheManager.cancelPotentialWork(file, fileIcon));
-
-            if (!file.isDirectory()) {
-                fileIcon.setImageResource(R.drawable.file);
-            } else {
-                fileIcon.setImageResource(R.drawable.ic_menu_archive);
-            }
-            fileIcon.setTag(file.hashCode());
+            thumbLoader.load(file).into(fileIcon);
 
             TextView fileSizeV = (TextView) view.findViewById(R.id.file_size);
             TextView fileSizeSeparatorV = (TextView) view.findViewById(R.id.file_separator);
@@ -142,39 +130,6 @@ public class LocalFileListAdapter extends BaseAdapter implements ListAdapter {
                     }
                     checkBoxV.setVisibility(View.VISIBLE);
                 }
-                
-             // get Thumbnail if file is image
-                if (BitmapUtils.isImage(file)){
-                // Thumbnail in Cache?
-                    Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                            String.valueOf(file.hashCode())
-                    );
-                    if (thumbnail != null){
-                        fileIcon.setImageBitmap(thumbnail);
-                    } else {
-
-                        // generate new Thumbnail
-                        if (allowedToCreateNewThumbnail) {
-                            final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                    new ThumbnailsCacheManager.ThumbnailGenerationTask(fileIcon);
-                            if (thumbnail == null) {
-                                thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                            }
-                            final ThumbnailsCacheManager.AsyncDrawable asyncDrawable =
-                        		new ThumbnailsCacheManager.AsyncDrawable(
-                                    mContext.getResources(), 
-                                    thumbnail, 
-                                    task
-                		        );
-                            fileIcon.setImageDrawable(asyncDrawable);
-                            task.execute(file);
-                            Log_OC.v(TAG, "Executing task to generate a new thumbnail");
-
-                        } // else, already being generated, don't restart it
-                    }
-                } else {
-                    fileIcon.setImageResource(MimetypeIconUtil.getFileTypeIconId(null, file.getName()));
-                }  
 
             } else {
                 fileSizeSeparatorV.setVisibility(View.GONE);

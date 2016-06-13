@@ -21,7 +21,6 @@ package com.owncloud.android.ui.adapter;
 
 import android.content.Context;
 import android.database.DataSetObserver;
-import android.graphics.Bitmap;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,8 +35,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.datamodel.UploadsStorageManager;
 import com.owncloud.android.datamodel.UploadsStorageManager.UploadStatus;
 import com.owncloud.android.db.OCUpload;
@@ -47,7 +44,7 @@ import com.owncloud.android.lib.common.network.OnDatatransferProgressListener;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.MimetypeIconUtil;
+import com.owncloud.android.utils.glide.ThumbnailLoader;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
@@ -64,6 +61,7 @@ import java.util.Observer;
 public class ExpandableUploadListAdapter extends BaseExpandableListAdapter implements Observer {
 
     private static final String TAG = ExpandableUploadListAdapter.class.getSimpleName();
+    private final ThumbnailLoader thumbLoader;
     private FileActivity mParentActivity;
 
     private UploadsStorageManager mUploadsStorageManager;
@@ -130,6 +128,8 @@ public class ExpandableUploadListAdapter extends BaseExpandableListAdapter imple
     public ExpandableUploadListAdapter(FileActivity parentActivity) {
         Log_OC.d(TAG, "ExpandableUploadListAdapter");
         mParentActivity = parentActivity;
+        thumbLoader = new ThumbnailLoader(parentActivity);
+
         mUploadsStorageManager = new UploadsStorageManager(mParentActivity.getContentResolver());
         mUploadGroups = new UploadGroup[3];
         mUploadGroups[0] = new UploadGroup(mParentActivity.getString(R.string.uploads_view_group_current_uploads)) {
@@ -381,95 +381,13 @@ public class ExpandableUploadListAdapter extends BaseExpandableListAdapter imple
 
             /// Set icon or thumbnail
             ImageView fileIcon = (ImageView) view.findViewById(R.id.thumbnail);
-            fileIcon.setImageResource(R.drawable.file);
 
-            /** Cancellation needs do be checked and done before changing the drawable in fileIcon, or
-             * {@link ThumbnailsCacheManager#cancelPotentialWork} will NEVER cancel any task.
-             **/
-            OCFile fakeFileToCheatThumbnailsCacheManagerInterface = new OCFile(upload.getRemotePath());
-            fakeFileToCheatThumbnailsCacheManagerInterface.setStoragePath(upload.getLocalPath());
-            fakeFileToCheatThumbnailsCacheManagerInterface.setMimetype(upload.getMimeType());
+            thumbLoader.load(upload).into(fileIcon);
 
-            boolean allowedToCreateNewThumbnail = (ThumbnailsCacheManager.cancelPotentialWork(
-                    fakeFileToCheatThumbnailsCacheManagerInterface,
-                    fileIcon)
-            );
-
-            // TODO this code is duplicated; refactor to a common place
-            if ((fakeFileToCheatThumbnailsCacheManagerInterface.isImage()
-                    && fakeFileToCheatThumbnailsCacheManagerInterface.getRemoteId() != null &&
-                    upload.getUploadStatus() == UploadStatus.UPLOAD_SUCCEEDED)) {
-                // Thumbnail in Cache?
-                Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                        String.valueOf(fakeFileToCheatThumbnailsCacheManagerInterface.getRemoteId())
-                );
-                if (thumbnail != null && !fakeFileToCheatThumbnailsCacheManagerInterface.needsUpdateThumbnail()) {
-                    fileIcon.setImageBitmap(thumbnail);
-                } else {
-                    // generate new Thumbnail
-                    if (allowedToCreateNewThumbnail) {
-                        final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                new ThumbnailsCacheManager.ThumbnailGenerationTask(
-                                        fileIcon, mParentActivity.getStorageManager(), mParentActivity.getAccount()
-                                );
-                        if (thumbnail == null) {
-                            thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                        }
-                        final ThumbnailsCacheManager.AsyncDrawable asyncDrawable =
-                                new ThumbnailsCacheManager.AsyncDrawable(
-                                        mParentActivity.getResources(),
-                                        thumbnail,
-                                        task
-                                );
-                        fileIcon.setImageDrawable(asyncDrawable);
-                        task.execute(fakeFileToCheatThumbnailsCacheManagerInterface);
-                    }
-                }
-
-                if ("image/png".equals(upload.getMimeType())) {
-                    fileIcon.setBackgroundColor(mParentActivity.getResources()
-                            .getColor(R.color.background_color));
-                }
-
-
-            } else if (fakeFileToCheatThumbnailsCacheManagerInterface.isImage()) {
-                File file = new File(upload.getLocalPath());
-                // Thumbnail in Cache?
-                Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                        String.valueOf(file.hashCode()));
-                if (thumbnail != null) {
-                    fileIcon.setImageBitmap(thumbnail);
-                } else {
-                    // generate new Thumbnail
-                    if (allowedToCreateNewThumbnail) {
-                        final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                new ThumbnailsCacheManager.ThumbnailGenerationTask(fileIcon);
-                        if (thumbnail == null) {
-                            thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                        }
-                        final ThumbnailsCacheManager.AsyncDrawable asyncDrawable =
-                                new ThumbnailsCacheManager.AsyncDrawable(
-                                        mParentActivity.getResources(),
-                                        thumbnail,
-                                        task
-                                );
-                        fileIcon.setImageDrawable(asyncDrawable);
-                        task.execute(file);
-                        Log_OC.v(TAG, "Executing task to generate a new thumbnail");
-                    }
-                }
-
-                if ("image/png".equalsIgnoreCase(upload.getMimeType())) {
-                    fileIcon.setBackgroundColor(mParentActivity.getResources()
-                            .getColor(R.color.background_color));
-                }
-            } else {
-                fileIcon.setImageResource(MimetypeIconUtil.getFileTypeIconId(
-                        upload.getMimeType(),
-                        fileName
-                ));
+            if ("image/png".equals(upload.getMimeType())) {
+                fileIcon.setBackgroundColor(mParentActivity.getResources()
+                        .getColor(R.color.background_color));
             }
-
         }
 
         return view;
