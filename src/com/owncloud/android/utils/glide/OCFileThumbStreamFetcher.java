@@ -95,8 +95,7 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
     @Override
     public String getId() {
         final String id = file.getRemoteId() + "?wxh=" + px
-                + "&contentMod=" + file.getModificationTimestampAtLastSyncForData()
-                + "&localMod=" + file.getLocalModificationTimestamp()
+                + "&eTag=" + file.getEtag()
                 + "&propMod="+file.getModificationTimestamp();
         return id;
     }
