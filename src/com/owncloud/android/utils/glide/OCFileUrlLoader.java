@@ -16,7 +16,8 @@ import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.OwnCloudClient;
 import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 import com.owncloud.android.lib.common.utils.Log_OC;
-import com.owncloud.android.ui.fragment.FileFragment;
+import com.owncloud.android.ui.activity.ComponentsGetter;
+import com.owncloud.android.ui.activity.FileActivity;
 
 import java.io.InputStream;
 
@@ -52,12 +53,19 @@ public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
         private final OwnCloudClient client;
 
         public Factory(Context context) {
-			this(AccountUtils.getCurrentOwnCloudAccount(context), getStorageManager(context));
+			this(getAccount(context), getStorageManager(context));
 		}
 
-		private static FileDataStorageManager getStorageManager(Context context) {
-			if(context instanceof FileFragment.ContainerActivity){
-				return ((FileFragment.ContainerActivity) context).getStorageManager();
+        private static Account getAccount(Context context) {
+            if(context instanceof FileActivity){
+                return ((FileActivity) context).getAccount();
+            }
+            return AccountUtils.getCurrentOwnCloudAccount(context);
+        }
+
+        private static FileDataStorageManager getStorageManager(Context context) {
+			if(context instanceof ComponentsGetter){
+				return ((ComponentsGetter) context).getStorageManager();
 			}
 			return null;
 		}
