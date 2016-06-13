@@ -27,7 +27,6 @@ package com.owncloud.android.ui.adapter;
 import android.accounts.Account;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.text.format.DateUtils;
 import android.view.LayoutInflater;
@@ -46,7 +45,6 @@ import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader.FileUploaderBinder;
 import com.owncloud.android.services.OperationsService.OperationsServiceBinder;
@@ -65,6 +63,7 @@ import java.util.Vector;
 public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
     private final DrawableRequestBuilder<OCFile> thumbRequest;
+    private final LayoutInflater inflater;
     private Context mContext;
     private OCFile mFile = null;
     private Vector<OCFile> mFiles = null;
@@ -99,11 +98,11 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
         FileStorageUtils.mSortOrder = mAppPreferences.getInt("sortOrder", 0);
         FileStorageUtils.mSortAscending = mAppPreferences.getBoolean("sortAscending", true);
-        
-        // initialise thumbnails cache on background thread
-        new ThumbnailsCacheManager.InitDiskCacheTask().execute();
 
         mGridMode = false;
+
+        inflater = (LayoutInflater) mContext
+                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
     @Override
@@ -144,37 +143,31 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
 
         View view = convertView;
-        OCFile file = null;
-        LayoutInflater inflator = (LayoutInflater) mContext
-                .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-        if (mFiles != null && mFiles.size() > position) {
-            file = mFiles.get(position);
-        }
+        OCFile file = (OCFile) getItem(position);
 
         // Find out which layout should be displayed
         ViewType viewType;
         if (!mGridMode){
             viewType = ViewType.LIST_ITEM;
-        } else if (file.isImage()){
+        } else if (file != null && file.isImage()){
             viewType = ViewType.GRID_IMAGE;
         } else {
             viewType = ViewType.GRID_ITEM;
         }
 
         // create view only if differs, otherwise reuse
-        if (convertView == null || (convertView != null && convertView.getTag() != viewType)) {
+        if (convertView == null || convertView.getTag() != viewType) {
             switch (viewType) {
                 case GRID_IMAGE:
-                    view = inflator.inflate(R.layout.grid_image, null);
+                    view = inflater.inflate(R.layout.grid_image, parent);
                     view.setTag(ViewType.GRID_IMAGE);
                     break;
                 case GRID_ITEM:
-                    view = inflator.inflate(R.layout.grid_item, null);
+                    view = inflater.inflate(R.layout.grid_item, parent);
                     view.setTag(ViewType.GRID_ITEM);
                     break;
                 case LIST_ITEM:
-                    view = inflator.inflate(R.layout.list_item, null);
+                    view = inflater.inflate(R.layout.list_item, parent);
                     view.setTag(ViewType.LIST_ITEM);
                     break;
             }
@@ -210,19 +203,17 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
 
                     if (!file.isFolder()) {
                         AbsListView parentList = (AbsListView)parent;
-                        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                            if (parentList.getChoiceMode() == AbsListView.CHOICE_MODE_NONE) {
-                                checkBoxV.setVisibility(View.GONE);
+                        if (parentList.getChoiceMode() == AbsListView.CHOICE_MODE_NONE) {
+                            checkBoxV.setVisibility(View.GONE);
+                        } else {
+                            if (parentList.isItemChecked(position)) {
+                                checkBoxV.setImageResource(
+                                        R.drawable.ic_checkbox_marked);
                             } else {
-                                if (parentList.isItemChecked(position)) {
-                                    checkBoxV.setImageResource(
-                                            R.drawable.ic_checkbox_marked);
-                                } else {
-                                    checkBoxV.setImageResource(
-                                            R.drawable.ic_checkbox_blank_outline);
-                                }
-                                checkBoxV.setVisibility(View.VISIBLE);
+                                checkBoxV.setImageResource(
+                                        R.drawable.ic_checkbox_blank_outline);
                             }
+                            checkBoxV.setVisibility(View.VISIBLE);
                         }
 
                     } else { //Folder
