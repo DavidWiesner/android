@@ -409,8 +409,7 @@ public class ReceiveExternalFilesActivity extends FileActivity
                                                 data,
                                                 R.layout.uploader_list_item_layout,
                                                 new String[] {"dirname"},
-                                                new int[] {R.id.filename},
-                                                getStorageManager(), getAccount());
+                                                new int[] {R.id.filename});
 
             mListView.setAdapter(sa);
             Button btnChooseFolder = (Button) findViewById(R.id.uploader_choose_folder);

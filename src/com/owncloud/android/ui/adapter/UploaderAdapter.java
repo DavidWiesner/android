@@ -20,9 +20,7 @@
 
 package com.owncloud.android.ui.adapter;
 
-import android.accounts.Account;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,32 +29,27 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager.AsyncDrawable;
-import com.owncloud.android.utils.MimetypeIconUtil;
+import com.owncloud.android.utils.glide.ThumbnailLoader;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class UploaderAdapter extends SimpleAdapter {
-    
+
+    private final ThumbnailLoader thumbLoader;
     private Context mContext;
-    private Account mAccount;
-    private FileDataStorageManager mStorageManager;
     private LayoutInflater inflater;
 
     public UploaderAdapter(Context context,
                            List<? extends Map<String, ?>> data, int resource, String[] from,
-                           int[] to, FileDataStorageManager storageManager, Account account) {
+                           int[] to) {
         super(context, data, resource, from, to);
-        mAccount = account;
-        mStorageManager = storageManager;
         mContext = context;
         inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        thumbLoader = new ThumbnailLoader(context);
     }
 
     @Override
@@ -72,43 +65,12 @@ public class UploaderAdapter extends SimpleAdapter {
         filename.setText(file.getFileName());
         
         ImageView fileIcon = (ImageView) vi.findViewById(R.id.thumbnail);
-        fileIcon.setTag(file.getFileId());
+        thumbLoader.load(file).into(fileIcon);
 
         // TODO enable after #1277 is merged
 //        TextView lastModV = (TextView) vi.findViewById(R.id.last_mod);
 //        lastModV.setText(DisplayUtils.getRelativeTimestamp(mContext, file));
-        
-        // get Thumbnail if file is image
-        if (file.isImage() && file.getRemoteId() != null){
-             // Thumbnail in Cache?
-            Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(
-                    String.valueOf(file.getRemoteId())
-            );
-            if (thumbnail != null && !file.needsUpdateThumbnail()){
-                fileIcon.setImageBitmap(thumbnail);
-            } else {
-                // generate new Thumbnail
-                if (ThumbnailsCacheManager.cancelPotentialWork(file, fileIcon)) {
-                    final ThumbnailsCacheManager.ThumbnailGenerationTask task = 
-                            new ThumbnailsCacheManager.ThumbnailGenerationTask(fileIcon, mStorageManager, 
-                                    mAccount);
-                    if (thumbnail == null) {
-                        thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                    }
-                    final AsyncDrawable asyncDrawable = new AsyncDrawable(
-                            mContext.getResources(), 
-                            thumbnail, 
-                            task
-                    );
-                    fileIcon.setImageDrawable(asyncDrawable);
-                    task.execute(file);
-                }
-            }
-        } else {
-            fileIcon.setImageResource(
-                    MimetypeIconUtil.getFileTypeIconId(file.getMimetype(), file.getFileName())
-            );
-        }
+
         return vi;
     }
 

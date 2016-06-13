@@ -22,7 +22,7 @@
 package com.owncloud.android.ui.fragment;
 
 import android.accounts.Account;
-import android.graphics.Bitmap;
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,11 +36,11 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.owncloud.android.MainApp;
+import com.bumptech.glide.DrawableTypeRequest;
+import com.bumptech.glide.Glide;
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.files.FileMenuFilter;
 import com.owncloud.android.files.services.FileDownloader.FileDownloaderBinder;
 import com.owncloud.android.files.services.FileUploader.FileUploaderBinder;
@@ -423,39 +423,15 @@ public class FileDetailFragment extends FileFragment implements OnClickListener 
         ImageView iv = (ImageView) getView().findViewById(R.id.fdIcon);
 
         if (iv != null) {
-            Bitmap thumbnail;
-            iv.setTag(file.getFileId());
-
+            DrawableTypeRequest<OCFile> thumbRequest = Glide.with((Activity) mContainerActivity)
+                    .from(OCFile.class);
             if (file.isImage()) {
-                String tagId = String.valueOf(file.getRemoteId());
-                thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(tagId);
-
-                if (thumbnail != null && !file.needsUpdateThumbnail()) {
-                    iv.setImageBitmap(thumbnail);
-                } else {
-                    // generate new Thumbnail
-                    if (ThumbnailsCacheManager.cancelPotentialWork(file, iv)) {
-                        final ThumbnailsCacheManager.ThumbnailGenerationTask task =
-                                new ThumbnailsCacheManager.ThumbnailGenerationTask(
-                                        iv, mContainerActivity.getStorageManager(), mAccount
-                                );
-                        if (thumbnail == null) {
-                            thumbnail = ThumbnailsCacheManager.mDefaultImg;
-                        }
-                        final ThumbnailsCacheManager.AsyncDrawable asyncDrawable =
-                                new ThumbnailsCacheManager.AsyncDrawable(
-                                        MainApp.getAppContext().getResources(),
-                                        thumbnail,
-                                        task
-                                );
-                        iv.setImageDrawable(asyncDrawable);
-                        task.execute(file);
-                    }
-                }
+                thumbRequest.placeholder(R.drawable.file_image).load(file).into(iv);
             } else {
 				// Name of the file, to deduce the icon to use in case the MIME type is not precise enough
 				String filename = file.getFileName();
-                iv.setImageResource(MimetypeIconUtil.getFileTypeIconId(mimetype, filename));
+                thumbRequest.placeholder(MimetypeIconUtil.getFileTypeIconId(mimetype, filename))
+                        .load(null).into(iv);
 			}
         }
     }
