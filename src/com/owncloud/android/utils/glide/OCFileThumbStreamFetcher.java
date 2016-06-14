@@ -1,14 +1,28 @@
+/*
+ * Copyright (C) 2016 David Boho
+ * Copyright (C) 2016 ownCloud Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.owncloud.android.utils.glide;
 
 import android.accounts.Account;
-import android.content.res.Resources;
 import android.net.Uri;
 
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.util.ContentLengthInputStream;
-import com.owncloud.android.MainApp;
-import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
@@ -22,33 +36,27 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Created by David Wiesner on 06.06.16.
- */
-
 public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
     private static final String TAG = OCFileThumbStreamFetcher.class.getSimpleName();
     private OwnCloudClient mClient;
     private Account mAccount;
     private final FileDataStorageManager storageManager;
     private final OCFile file;
-    private final int px;
+    private final int width;
+    private final int height;
     private GetMethod get;
     private InputStream inputStream;
 
-    public OCFileThumbStreamFetcher(OwnCloudClient client, Account account, FileDataStorageManager storageManager, OCFile model) {
+    public OCFileThumbStreamFetcher(OwnCloudClient client, Account account,
+                                    FileDataStorageManager storageManager, OCFile model,
+                                    int width, int height) {
 
         this.mClient = client;
         this.mAccount = account;
         this.storageManager = storageManager;
         this.file = model;
-        px = getThumbnailDimension();
-    }
-
-    private int getThumbnailDimension() {
-        // Converts dp to pixel
-        Resources r = MainApp.getAppContext().getResources();
-        return Math.round(r.getDimension(R.dimen.file_icon_size_grid));
+        this.width = width;
+        this.height = height;
     }
 
     @Override
@@ -62,7 +70,7 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
             return null;
         }
         String uri = mClient.getBaseUri() + "/index.php/apps/files/api/v1/thumbnail/" +
-                px + "/" + px + Uri.encode(file.getRemotePath(), "/");
+                width + "/" + height + Uri.encode(file.getRemotePath(), "/");
         get = new GetMethod(uri);
         int status = mClient.executeMethod(get);
         if (status == HttpStatus.SC_OK) {
@@ -94,7 +102,7 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
 
     @Override
     public String getId() {
-        final String id = file.getRemoteId() + "?wxh=" + px
+        final String id = file.getRemoteId() + "?w=" + width + "&h=" + height
                 + "&eTag=" + file.getEtag()
                 + "&propMod="+file.getModificationTimestamp();
         return id;

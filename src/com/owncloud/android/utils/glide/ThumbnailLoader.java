@@ -1,6 +1,24 @@
+/*
+ * Copyright (C) 2016 David Boho
+ * Copyright (C) 2016 ownCloud Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.owncloud.android.utils.glide;
 
 import android.content.Context;
+import android.content.res.Resources;
 
 import com.bumptech.glide.DrawableRequestBuilder;
 import com.bumptech.glide.DrawableTypeRequest;
@@ -19,23 +37,38 @@ import java.io.File;
  */
 public class ThumbnailLoader {
     private final Context context;
+    private final int width;
+    private final int height;
     private volatile DrawableTypeRequest<OCFile> ocFileRequest;
     private final DrawableTypeRequest<File> fileRequest;
+
+    public ThumbnailLoader(Context context) {
+        this(context, getDefaultThumbnailDimension(context), getDefaultThumbnailDimension(context));
+    }
 
     /**
      * @param context Should be provide at least a Context + getAccount + getStorage methods
      */
-    public ThumbnailLoader(Context context) {
+    public ThumbnailLoader(Context context, int width, int height) {
         this.context = context;
+        this.width = width;
+        this.height = height;
         fileRequest = Glide.with(context).from(File.class);
     }
 
-    public DrawableRequestBuilder<OCFile> load(OCFile file){
-        if(file.isImage() && (file.getRemoteId() != null || file.getRemotePath() != null)){
-            return getOcFileRequest().placeholder(R.drawable.file_image).load(file);
+    private static int getDefaultThumbnailDimension(Context context) {
+        Resources r = context.getResources();
+        return Math.round(r.getDimension(R.dimen.file_icon_size_grid));
+    }
+
+
+    public DrawableRequestBuilder<OCFile> load(OCFile file) {
+        if (file.isImage() && (file.getRemoteId() != null || file.getRemotePath() != null)) {
+            return getOcFileRequest().placeholder(R.drawable.file_image).override(width, height)
+                    .load(file);
         } else {
             int iconResourceId;
-            if (file.isFolder()){
+            if (file.isFolder()) {
                 iconResourceId = MimetypeIconUtil.getFolderTypeIconId(
                         file.isSharedWithMe() || file.isSharedWithSharee(),
                         file.isSharedViaLink());
@@ -47,15 +80,16 @@ public class ThumbnailLoader {
         }
     }
 
-    public DrawableRequestBuilder<File> load(File file){
+    public DrawableRequestBuilder<File> load(File file) {
         return load(file, null);
     }
-    public DrawableRequestBuilder<File> load(File file, String mimeType){
-        if((mimeType != null && mimeType.startsWith("image/")) || BitmapUtils.isImage(file)){
-            return fileRequest.placeholder(R.drawable.file_image).load(file);
+
+    public DrawableRequestBuilder<File> load(File file, String mimeType) {
+        if ((mimeType != null && mimeType.startsWith("image/")) || BitmapUtils.isImage(file)) {
+            return fileRequest.placeholder(R.drawable.file_image).override(width, height).load(file);
         } else {
             int iconResourceId;
-            if(file.isDirectory()){
+            if (file.isDirectory()) {
                 iconResourceId = MimetypeIconUtil.getFolderTypeIconId(false, false);
             } else {
                 iconResourceId = MimetypeIconUtil.getFileTypeIconId(mimeType, file.getName());
@@ -63,6 +97,7 @@ public class ThumbnailLoader {
             return fileRequest.placeholder(iconResourceId).load(null);
         }
     }
+
     public DrawableRequestBuilder<?> load(OCUpload upload) {
         if (upload.getUploadStatus() == UploadsStorageManager.UploadStatus.UPLOAD_SUCCEEDED) {
             final OCFile file = new OCFile(upload.getRemotePath());
@@ -75,9 +110,9 @@ public class ThumbnailLoader {
     }
 
     private DrawableTypeRequest<OCFile> getOcFileRequest() {
-        if(ocFileRequest == null){
-            synchronized (this){
-                if(ocFileRequest == null){
+        if (ocFileRequest == null) {
+            synchronized (this) {
+                if (ocFileRequest == null) {
                     ocFileRequest = Glide.with(context).from(OCFile.class);
                 }
             }

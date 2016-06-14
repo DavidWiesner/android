@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2016 David Boho
+ * Copyright (C) 2016 ownCloud Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.owncloud.android.utils.glide;
 
 
@@ -21,10 +38,6 @@ import com.owncloud.android.ui.activity.FileActivity;
 
 import java.io.InputStream;
 
-/**
- * Created by David Wiesner on 03.06.16.
- */
-
 public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
     private static final String TAG = OCFileUrlLoader.class.getSimpleName();
     private OwnCloudClient client;
@@ -32,7 +45,6 @@ public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
     private final FileDataStorageManager storageManager;
 
     public OCFileUrlLoader(OwnCloudClient client, Account account, FileDataStorageManager storageManager) {
-
         this.client = client;
         this.account = account;
         this.storageManager = storageManager;
@@ -44,7 +56,8 @@ public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
             Log_OC.d(TAG,account.toString());
             client = OCFileUrlLoader.Factory.getClient(this.account);
         }
-		return new OCFileThumbStreamFetcher(this.client, this.account, this.storageManager, model);
+		return new OCFileThumbStreamFetcher(this.client, this.account, this.storageManager, model,
+                width, height);
 	}
 
 	public static class Factory implements ModelLoaderFactory<OCFile, InputStream> {
