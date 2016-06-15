@@ -20,10 +20,12 @@ package com.owncloud.android.utils.glide;
 
 import android.content.Context;
 
+import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.data.DataFetcher;
 import com.bumptech.glide.load.model.GenericLoaderFactory;
 import com.bumptech.glide.load.model.ModelLoader;
 import com.bumptech.glide.load.model.ModelLoaderFactory;
+import com.bumptech.glide.load.model.stream.StreamModelLoader;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.OwnCloudClientManager;
 import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
@@ -65,4 +67,25 @@ public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
         public void teardown() {
         }
     }
+
+
+    private static class CacheOnlyOCFileLoader implements StreamModelLoader<OCFile>{
+        @Override
+        public DataFetcher<InputStream> getResourceFetcher(OCFile model, int width, int height) {
+            return new CacheOnlyStreamFetcher(model, width, height);
+        }
+    }
+
+    private static class CacheOnlyStreamFetcher extends OCFileThumbStreamFetcher{
+        public CacheOnlyStreamFetcher(OCFile file, int width, int height) {
+            super(null, null, file, width, height);
+        }
+
+        @Override
+        public InputStream loadData(Priority priority) throws Exception {
+            return null;
+        }
+    }
+
+    public final static CacheOnlyOCFileLoader CACHE_ONLY = new CacheOnlyOCFileLoader();
 }

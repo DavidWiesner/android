@@ -23,7 +23,6 @@ package com.owncloud.android.ui.fragment;
 
 import android.accounts.Account;
 import android.app.Activity;
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatButton;
@@ -44,7 +43,6 @@ import android.widget.Toast;
 import com.owncloud.android.R;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.shares.OCShare;
 import com.owncloud.android.lib.resources.shares.ShareType;
@@ -54,7 +52,7 @@ import com.owncloud.android.ui.adapter.ShareUserListAdapter;
 import com.owncloud.android.ui.dialog.ExpirationDatePickerDialogFragment;
 import com.owncloud.android.ui.dialog.SharePasswordDialogFragment;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.MimetypeIconUtil;
+import com.owncloud.android.utils.glide.ThumbnailLoader;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -190,18 +188,11 @@ public class ShareFileFragment extends Fragment
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.share_file_layout, container, false);
 
+
         // Setup layout
         // Image
         ImageView icon = (ImageView) view.findViewById(R.id.shareFileIcon);
-        icon.setImageResource(MimetypeIconUtil.getFileTypeIconId(mFile.getMimetype(),
-                mFile.getFileName()));
-        if (mFile.isImage()) {
-            String remoteId = String.valueOf(mFile.getRemoteId());
-            Bitmap thumbnail = ThumbnailsCacheManager.getBitmapFromDiskCache(remoteId);
-            if (thumbnail != null) {
-                icon.setImageBitmap(thumbnail);
-            }
-        }
+        new ThumbnailLoader(getActivity(), true).loadCached(mFile).into(icon);
         // Name
         TextView fileNameHeader = (TextView) view.findViewById(R.id.shareFileName);
         fileNameHeader.setText(getResources().getString(R.string.share_file, mFile.getFileName()));

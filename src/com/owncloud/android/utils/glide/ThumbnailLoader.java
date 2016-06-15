@@ -33,8 +33,8 @@ import com.owncloud.android.utils.MimetypeIconUtil;
 import java.io.File;
 
 /**
- * Load load thumbnails for {@link OCFile} or {@link File} and
- * Icons for all other FileTypes (e.g.: Folder and Document)
+ * Load thumbnails for {@link OCFile}  or {@link File} if ti's an image otherwise
+ * icons for all other FileTypes (e.g.: Folder and Document)
  */
 public class ThumbnailLoader {
     private final Context context;
@@ -115,6 +115,27 @@ public class ThumbnailLoader {
             return getOcFileRequest().placeholder(iconResourceId).load(null);
         }
     }
+
+    /**
+     * Load an thumbnail only if it's in the cache or an icon corresponding to the mimetype
+     * @param file if this file is an image a thumbnail will be loaded otherwise an icon will be
+     *             loaded corresponding to the mimetype of this file. Use
+     *             {@link MimetypeIconUtil#determineMimeTypesByFilename(String)} to determine the
+     *             mimetype.
+     * @return an request builder usage: <pre>loader.loadCached(ocFile).into(imageView)</pre>
+     *
+     * @see MimetypeIconUtil#getFolderTypeIconId(boolean, boolean)
+     * @see MimetypeIconUtil#getFileTypeIconId(String, String)
+     * @see MimetypeIconUtil#determineMimeTypesByFilename(String)
+     */
+    public DrawableRequestBuilder<OCFile> loadCached(OCFile file) {
+        if (file.isImage() && (file.getRemoteId() != null || file.getRemotePath() != null)) {
+            return decorateImageRequest(Glide.with(context).using(OCFileUrlLoader.CACHE_ONLY).load(file));
+        } else {
+            return load(file);
+        }
+    }
+
 
     /**
      * Load an thumbnail or an icon corresponding to the mimetype
