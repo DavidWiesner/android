@@ -30,7 +30,7 @@ import android.widget.TextView;
 
 import com.owncloud.android.R;
 import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.utils.glide.ThumbnailLoader;
+import com.owncloud.android.datamodel.ThumbnailLoader;
 
 import java.util.HashMap;
 import java.util.List;

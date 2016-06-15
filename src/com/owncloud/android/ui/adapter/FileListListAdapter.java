@@ -49,7 +49,7 @@ import com.owncloud.android.services.OperationsService.OperationsServiceBinder;
 import com.owncloud.android.ui.activity.ComponentsGetter;
 import com.owncloud.android.utils.DisplayUtils;
 import com.owncloud.android.utils.FileStorageUtils;
-import com.owncloud.android.utils.glide.ThumbnailLoader;
+import com.owncloud.android.datamodel.ThumbnailLoader;
 
 import java.util.Vector;
 

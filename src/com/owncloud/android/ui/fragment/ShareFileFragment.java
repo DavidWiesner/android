@@ -52,7 +52,7 @@ import com.owncloud.android.ui.adapter.ShareUserListAdapter;
 import com.owncloud.android.ui.dialog.ExpirationDatePickerDialogFragment;
 import com.owncloud.android.ui.dialog.SharePasswordDialogFragment;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.glide.ThumbnailLoader;
+import com.owncloud.android.datamodel.ThumbnailLoader;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

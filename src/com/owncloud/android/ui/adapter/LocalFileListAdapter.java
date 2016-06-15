@@ -32,7 +32,7 @@ import android.widget.TextView;
 
 import com.owncloud.android.R;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.glide.ThumbnailLoader;
+import com.owncloud.android.datamodel.ThumbnailLoader;
 
 import java.io.File;
 import java.util.Arrays;

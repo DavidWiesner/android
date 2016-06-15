@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package com.owncloud.android.utils.glide;
+package com.owncloud.android.datamodel;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -24,11 +24,11 @@ import com.bumptech.glide.DrawableRequestBuilder;
 import com.bumptech.glide.DrawableTypeRequest;
 import com.bumptech.glide.Glide;
 import com.owncloud.android.R;
-import com.owncloud.android.datamodel.OCFile;
-import com.owncloud.android.datamodel.UploadsStorageManager;
 import com.owncloud.android.db.OCUpload;
 import com.owncloud.android.utils.BitmapUtils;
 import com.owncloud.android.utils.MimetypeIconUtil;
+import com.owncloud.android.utils.glide.OCFileThumbStreamFetcher;
+import com.owncloud.android.utils.glide.OCFileUrlLoader;
 
 import java.io.File;
 

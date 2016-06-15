@@ -44,7 +44,7 @@ import com.owncloud.android.lib.common.network.OnDatatransferProgressListener;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.utils.DisplayUtils;
-import com.owncloud.android.utils.glide.ThumbnailLoader;
+import com.owncloud.android.datamodel.ThumbnailLoader;
 
 import java.io.File;
 import java.lang.ref.WeakReference;
