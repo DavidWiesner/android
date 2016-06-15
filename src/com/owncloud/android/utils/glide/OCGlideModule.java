@@ -27,6 +27,10 @@ import com.owncloud.android.datamodel.OCFile;
 
 import java.io.InputStream;
 
+/**
+ * Register a {@link com.bumptech.glide.load.model.ModelLoaderFactory} for {@link OCFile}
+ * @see GlideModule
+ */
 public class OCGlideModule implements GlideModule {
 	@Override
 	public void applyOptions(Context context, GlideBuilder builder) {

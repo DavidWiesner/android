@@ -42,8 +42,10 @@ public class ThumbnailLoader {
     private volatile DrawableTypeRequest<OCFile> ocFileRequest;
     private final DrawableTypeRequest<File> fileRequest;
 
-    public ThumbnailLoader(Context context) {
-        this(context, getDefaultThumbnailDimension(context), getDefaultThumbnailDimension(context));
+    public ThumbnailLoader(Context context, boolean useDefaultThumbnailSize) {
+        this(context,
+                useDefaultThumbnailSize ? getDefaultThumbnailDimension(context): -1,
+                useDefaultThumbnailSize ? getDefaultThumbnailDimension(context): -1);
     }
 
     /**
@@ -63,9 +65,9 @@ public class ThumbnailLoader {
 
 
     public DrawableRequestBuilder<OCFile> load(OCFile file) {
+        // TODO discussion: load local file instead if available?
         if (file.isImage() && (file.getRemoteId() != null || file.getRemotePath() != null)) {
-            return getOcFileRequest().placeholder(R.drawable.file_image).override(width, height)
-                    .load(file);
+            return decorateImageRequest(getOcFileRequest()).load(file);
         } else {
             int iconResourceId;
             if (file.isFolder()) {
@@ -86,7 +88,7 @@ public class ThumbnailLoader {
 
     public DrawableRequestBuilder<File> load(File file, String mimeType) {
         if ((mimeType != null && mimeType.startsWith("image/")) || BitmapUtils.isImage(file)) {
-            return fileRequest.placeholder(R.drawable.file_image).override(width, height).load(file);
+            return decorateImageRequest(fileRequest).load(file);
         } else {
             int iconResourceId;
             if (file.isDirectory()) {
@@ -107,6 +109,15 @@ public class ThumbnailLoader {
         } else {
             return load(new File(upload.getLocalPath()), upload.getMimeType());
         }
+    }
+
+    private <T> DrawableRequestBuilder<T> decorateImageRequest(
+            DrawableRequestBuilder<T> requestBuilder){
+        requestBuilder = requestBuilder.placeholder(R.drawable.file_image);
+        if(width == -1 || height == -1){
+            requestBuilder = requestBuilder.override(width, height);
+        }
+        return requestBuilder;
     }
 
     private DrawableTypeRequest<OCFile> getOcFileRequest() {

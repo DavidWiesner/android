@@ -128,7 +128,7 @@ public class ExpandableUploadListAdapter extends BaseExpandableListAdapter imple
     public ExpandableUploadListAdapter(FileActivity parentActivity) {
         Log_OC.d(TAG, "ExpandableUploadListAdapter");
         mParentActivity = parentActivity;
-        thumbLoader = new ThumbnailLoader(parentActivity);
+        thumbLoader = new ThumbnailLoader(parentActivity, true);
 
         mUploadsStorageManager = new UploadsStorageManager(mParentActivity.getContentResolver());
         mUploadGroups = new UploadGroup[3];

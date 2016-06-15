@@ -49,7 +49,7 @@ public class UploaderAdapter extends SimpleAdapter {
         mContext = context;
         inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        thumbLoader = new ThumbnailLoader(context);
+        thumbLoader = new ThumbnailLoader(context, true);
     }
 
     @Override

@@ -54,7 +54,7 @@ public class LocalFileListAdapter extends BaseAdapter implements ListAdapter {
     public LocalFileListAdapter(File directory, Context context) {
         mContext = context;
         swapDirectory(directory);
-        thumbLoader = new ThumbnailLoader(context);
+        thumbLoader = new ThumbnailLoader(context, true);
     }
 
     @Override

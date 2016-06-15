@@ -82,7 +82,7 @@ public class FileListListAdapter extends BaseAdapter implements ListAdapter {
             Context context,
             ComponentsGetter transferServiceGetter
             ) {
-        thumbLoader = new ThumbnailLoader(context);
+        thumbLoader = new ThumbnailLoader(context, true);
         mJustFolders = justFolders;
         mContext = context;
         mAccount = AccountUtils.getCurrentOwnCloudAccount(mContext);
