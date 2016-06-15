@@ -76,7 +76,7 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
         get = new GetMethod(uri);
         final int status = client.executeMethod(get);
         if (status == HttpStatus.SC_OK) {
-            setThumbnailLoad(context);
+            setThumbnailLoaded(true);
             final long length = get.getResponseContentLength();
             inputStream = ContentLengthInputStream.obtain(get.getResponseBodyAsStream(), length);
             return inputStream;
@@ -98,6 +98,7 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
 
     @Override
     public void cancel() {
+        setThumbnailLoaded(false);
         if (get != null) {
             try {
                 get.abort();
@@ -139,13 +140,13 @@ public class OCFileThumbStreamFetcher implements DataFetcher<InputStream> {
         return AccountUtils.getCurrentOwnCloudAccount(context);
     }
 
-    private void setThumbnailLoad(Context context) {
+    private void setThumbnailLoaded(boolean isLoaded) {
         if (context instanceof ComponentsGetter) {
             final FileDataStorageManager manager = ((ComponentsGetter) context).getStorageManager();
             if (manager == null || file == null) {
                 return;
             }
-            file.setNeedsUpdateThumbnail(false);
+            file.setNeedsUpdateThumbnail(!isLoaded);
             manager.saveFile(file);
         }
     }

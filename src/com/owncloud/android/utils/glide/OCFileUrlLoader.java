@@ -30,6 +30,9 @@ import com.owncloud.android.lib.common.OwnCloudClientManagerFactory;
 
 import java.io.InputStream;
 
+/**
+ * A {@link ModelLoader} for {@link OCFile}
+ */
 @SuppressWarnings("WeakerAccess")
 public class OCFileUrlLoader implements ModelLoader<OCFile, InputStream> {
     private final Context context;

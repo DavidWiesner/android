@@ -33,7 +33,8 @@ import com.owncloud.android.utils.MimetypeIconUtil;
 import java.io.File;
 
 /**
- * Load load thumbnails for OCFile or File
+ * Load load thumbnails for {@link OCFile} or {@link File} and
+ * Icons for all other FileTypes (e.g.: Folder and Document)
  */
 public class ThumbnailLoader {
     private final Context context;
@@ -42,6 +43,23 @@ public class ThumbnailLoader {
     private volatile DrawableTypeRequest<OCFile> ocFileRequest;
     private final DrawableTypeRequest<File> fileRequest;
 
+    /**
+     * Init ThumbnailLoader with default or target size
+     *
+     * Usage:
+     * <pre>
+     *     ThumbnailLoader loader = new ThumbnailLoader(context, false);
+     *     //...
+     *     loader.load(ocFile).into(imageView);
+     * </pre>
+     * @param context if {@link Context} implements {@link com.owncloud.android.ui.activity.ComponentsGetter}
+     *                {@link OCFile#setNeedsUpdateThumbnail(boolean)} will be called after load
+     *                (see {@link OCFileThumbStreamFetcher}). If context is an instance of {@link com.owncloud.android.ui.activity.FileActivity} the Account will be request of that
+     *                otherwise {@link com.owncloud.android.authentication.AccountUtils#getCurrentOwnCloudAccount(Context)} is used.
+     * @param useDefaultThumbnailSize if true the ThumbnailLoader will load images in default size
+     *                                otherwise the thumbnail size will be automatically
+     *                                calculated for the target (e.g. an ImageView)
+     */
     public ThumbnailLoader(Context context, boolean useDefaultThumbnailSize) {
         this(context,
                 useDefaultThumbnailSize ? getDefaultThumbnailDimension(context): -1,
@@ -49,7 +67,20 @@ public class ThumbnailLoader {
     }
 
     /**
-     * @param context Should be provide at least a Context + getAccount + getStorage methods
+     * Init ThumbnailLoader with specific size
+     *
+     * Usage:
+     * <pre>
+     *     ThumbnailLoader loader = new ThumbnailLoader(context, 1024, 1024);
+     *     //...
+     *     loader.load(ocFile).into(imageView);
+     * </pre>
+     * @param context if {@link Context} implements {@link com.owncloud.android.ui.activity.ComponentsGetter}
+     *                {@link OCFile#setNeedsUpdateThumbnail(boolean)} will be called after load
+     *                (see {@link OCFileThumbStreamFetcher}). If context is an instance of {@link com.owncloud.android.ui.activity.FileActivity} the Account will be request of that
+     *                otherwise {@link com.owncloud.android.authentication.AccountUtils#getCurrentOwnCloudAccount(Context)} is used.
+     * @param width the target width of the thumbnail
+     * @param height the target height of the thumbnail
      */
     public ThumbnailLoader(Context context, int width, int height) {
         this.context = context;
@@ -58,12 +89,15 @@ public class ThumbnailLoader {
         fileRequest = Glide.with(context).from(File.class);
     }
 
-    private static int getDefaultThumbnailDimension(Context context) {
-        Resources r = context.getResources();
-        return Math.round(r.getDimension(R.dimen.file_icon_size_grid));
-    }
-
-
+    /**
+     * Load a thumbnail or an icon corresponding to the mimetype
+     * @param file if this file is an image an thumbnail will be loaded otherwise an icon will be
+     *             loaded corresponding to the mimetype of this file
+     * @return an request builder usage: <pre>loader.load(ocFile).into(imageView)</pre>
+     *
+     * @see MimetypeIconUtil#getFolderTypeIconId(boolean, boolean)
+     * @see MimetypeIconUtil#getFileTypeIconId(String, String)
+     */
     public DrawableRequestBuilder<OCFile> load(OCFile file) {
         // TODO discussion: load local file instead if available?
         if (file.isImage() && (file.getRemoteId() != null || file.getRemotePath() != null)) {
@@ -82,10 +116,32 @@ public class ThumbnailLoader {
         }
     }
 
+    /**
+     * Load an thumbnail or an icon corresponding to the mimetype
+     * @param file if this file is an image a thumbnail will be loaded otherwise an icon will be
+     *             loaded corresponding to the mimetype of this file. Use
+     *             {@link MimetypeIconUtil#determineMimeTypesByFilename(String)} to determine the
+     *             mimetype.
+     * @return an request builder usage: <pre>loader.load(ocFile).into(imageView)</pre>
+     *
+     * @see MimetypeIconUtil#getFolderTypeIconId(boolean, boolean)
+     * @see MimetypeIconUtil#getFileTypeIconId(String, String)
+     * @see MimetypeIconUtil#determineMimeTypesByFilename(String)
+     */
     public DrawableRequestBuilder<File> load(File file) {
         return load(file, null);
     }
 
+    /**
+     * Load an thumbnail or an icon corresponding to the mimetype
+     * @param file the local file a thumbnail or icon should be requested
+     * @param mimeType if mimeType is an image a thumbnail will be loaded otherwise an icon will be
+     *             loaded corresponding to the mimetype of this file
+     * @return an request builder usage: <pre>loader.load(ocFile).into(imageView, "image/jpeg")</pre>
+     *
+     * @see MimetypeIconUtil#getFolderTypeIconId(boolean, boolean)
+     * @see MimetypeIconUtil#getFileTypeIconId(String, String)
+     */
     public DrawableRequestBuilder<File> load(File file, String mimeType) {
         if ((mimeType != null && mimeType.startsWith("image/")) || BitmapUtils.isImage(file)) {
             return decorateImageRequest(fileRequest).load(file);
@@ -100,6 +156,13 @@ public class ThumbnailLoader {
         }
     }
 
+    /**
+     * Load an thumbnail or an icon corresponding to the mimetype
+     * @param upload if upload is succeeded the thumbnail or will be request from the server
+     *               (see {@link #load(OCFile)}) otherwise the thumbnail will be load for the local
+     *               file (see {@link #load(File, String)})
+     * @return an request builder usage: <pre>loader.load(ocUpload).into(imageView)</pre>
+     */
     public DrawableRequestBuilder<?> load(OCUpload upload) {
         if (upload.getUploadStatus() == UploadsStorageManager.UploadStatus.UPLOAD_SUCCEEDED) {
             final OCFile file = new OCFile(upload.getRemotePath());
@@ -111,10 +174,15 @@ public class ThumbnailLoader {
         }
     }
 
+    private static int getDefaultThumbnailDimension(Context context) {
+        Resources r = context.getResources();
+        return Math.round(r.getDimension(R.dimen.file_icon_size_grid));
+    }
+
     private <T> DrawableRequestBuilder<T> decorateImageRequest(
             DrawableRequestBuilder<T> requestBuilder){
         requestBuilder = requestBuilder.placeholder(R.drawable.file_image);
-        if(width == -1 || height == -1){
+        if(width != -1 && height != -1){
             requestBuilder = requestBuilder.override(width, height);
         }
         return requestBuilder;
